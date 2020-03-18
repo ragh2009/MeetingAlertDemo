@@ -37,11 +37,25 @@ public class EventDataViewAdapter extends RecyclerView.Adapter<EventDataViewAdap
     public void onBindViewHolder(final ViewHolder holder, int position) {
 
         holder.eTitle.setText(eventsData.get(position).getTitle());
+
         holder.eStartDate.setText("Time: " + eventsData.get(position).geteTimeFormat());
+
         if (eventsData.get(position).getDescription() != null && eventsData.get(position).getDescription().length() > 0)
             holder.eDescription.setText("Agenda: " + eventsData.get(position).getDescription());
         else
             holder.eDescription.setText("Agenda: NA");
+
+        int minutes = getAlarmTime(Long.parseLong(eventsData.get(position).getDtStart()));
+        if (minutes > 0) {
+            if (minutes < 60)
+                holder.eAddAlarm.setText("(in " + minutes + " min)");
+            else
+                holder.eAddAlarm.setText("(in " + (minutes / 60) + " hr.)");
+            holder.eAddAlarm.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_alarm_on, 0, 0);
+        } else {
+            holder.eAddAlarm.setText("");
+            holder.eAddAlarm.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_alarm_off, 0, 0);
+        }
 
         holder.eAddAlarm.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -67,5 +81,20 @@ public class EventDataViewAdapter extends RecyclerView.Adapter<EventDataViewAdap
             eDescription = mView.findViewById(R.id.e_description);
             eAddAlarm = mView.findViewById(R.id.e_add_alarm);
         }
+    }
+
+    public int getAlarmTime(long milliSeconds) {
+        int mins = 0;
+        try {
+            Calendar calendar = Calendar.getInstance();
+            long alarmTime = milliSeconds - 600000;
+            if (alarmTime >= calendar.getTimeInMillis()) {
+                mins = (int) ((alarmTime- calendar.getTimeInMillis()) / 60000);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return mins;
     }
 }

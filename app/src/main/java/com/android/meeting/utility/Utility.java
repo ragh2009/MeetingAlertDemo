@@ -26,7 +26,7 @@ public class Utility {
         Calendar endTime = Calendar.getInstance();
         endTime.add(Calendar.DATE, 1);
 
-        String selection = "(( " + CalendarContract.Events.DTSTART + " >= " + startTime.getTimeInMillis() + " ) AND ( " + CalendarContract.Events.DTSTART + " <= " + endTime.getTimeInMillis() + " ) AND ( deleted != 1 ))";
+        String selection = "(( " + CalendarContract.Events.DTSTART + " >= " + startTime.getTimeInMillis() + " ) AND ( " + CalendarContract.Events.DTSTART + " <= " + endTime.getTimeInMillis() + " ) AND ( deleted != 1))";
 
         Cursor cursor = context.getContentResolver()
                 .query(
@@ -84,10 +84,26 @@ public class Utility {
         return value;
     }
 
+    public String getTime(long milliSeconds) {
+        String value = "";
+        try {
+            SimpleDateFormat formatter = new SimpleDateFormat(
+                    "hh:mm a");
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(milliSeconds);
+            value = formatter.format(calendar.getTime());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return value;
+    }
+
     private long getEndTime(String dtEnd) {
         long value = 0;
         try {
-            value = Long.valueOf(dtEnd.replace("P", "").replace("S", "")) * 1000;
+            if (dtEnd != null && dtEnd.length() > 0)
+                value = Long.valueOf(dtEnd.replace("P", "").replace("S", "")) * 1000;
         } catch (Exception e) {
             e.printStackTrace();
         }

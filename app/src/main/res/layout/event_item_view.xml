@@ -8,6 +8,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
         android:padding="@dimen/size_10">
 
@@ -52,13 +53,13 @@
 
         <TextView
             android:id="@+id/e_add_alarm"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:drawableTop="@drawable/ic_alarm_on"
             android:gravity="center"
-            android:padding="@dimen/size_5"
             android:text="@string/add_alarm"
             android:textColor="@android:color/black"
-            android:textSize="@dimen/text_size_10" />
+            android:textSize="@dimen/text_size_8" />
     </LinearLayout>
 
     <View

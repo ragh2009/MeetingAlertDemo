@@ -9,6 +9,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,13 +39,17 @@ import static android.content.Context.ALARM_SERVICE;
 import static android.content.Context.MODE_PRIVATE;
 
 public class MeetingViewFragment extends Fragment implements EventAlarmAddListeners {
-    private static final int REQUEST_ID_MULTIPLE_PERMISSIONS = 101;
+    private final int REQUEST_ID_MULTIPLE_PERMISSIONS = 101;
     private TimePickerDialog timePickerDialog;
     private ArrayList<EventsData> eventsData;
     private RecyclerView eventsViewList;
+    private EventDataViewAdapter eventAdapter = null;
     private TextView noDataTxt;
     private SharedPreferences mPref;
     private int addAlarmPos;
+    private CountDownTimer countDownTimer;
+    final Handler handler = new Handler();
+    private Runnable mHandlerTask;
 
     @Override
     public View onCreateView(
@@ -59,13 +66,20 @@ public class MeetingViewFragment extends Fragment implements EventAlarmAddListen
         mPref = getActivity().getSharedPreferences("MPrefs", MODE_PRIVATE);
         eventsViewList = view.findViewById(R.id.events_view);
         noDataTxt = view.findViewById(R.id.no_events_text);
-
+        initRepeatingTask();
     }
 
     @Override
     public void onResume() {
         super.onResume();
         checkingCalendarPermission();
+        startRepeatingTask();
+    }
+
+    @Override
+    public void onPause() {
+        stopRepeatingTask();
+        super.onPause();
     }
 
     private void checkingCalendarPermission() {
@@ -102,8 +116,8 @@ public class MeetingViewFragment extends Fragment implements EventAlarmAddListen
             LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity(), RecyclerView.VERTICAL, false);
             eventsViewList.setLayoutManager(linearLayoutManager);
 
-            EventDataViewAdapter mAdapter = new EventDataViewAdapter(getActivity(), eventsData, this);
-            eventsViewList.setAdapter(mAdapter);
+            eventAdapter = new EventDataViewAdapter(getActivity(), eventsData, this);
+            eventsViewList.setAdapter(eventAdapter);
             addAndUpdateReminders();
         }
     }
@@ -121,8 +135,9 @@ public class MeetingViewFragment extends Fragment implements EventAlarmAddListen
                     intent.putExtra("MData", eventsData.get(i));
                     if (!mPref.getBoolean(eventsData.get(i).getId() + "", false)) {
                         editor.putBoolean(eventsData.get(i).getId() + "", true);
-                        PendingIntent pendingIntent = PendingIntent.getBroadcast(getActivity(), eventsData.get(i).getId(), intent, 0);
+                        PendingIntent pendingIntent = PendingIntent.getBroadcast(getActivity(), eventsData.get(i).getId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
                         AlarmManager alarmManager = (AlarmManager) getActivity().getSystemService(ALARM_SERVICE);
+                        Log.v("AlarmTime:", new Utility().getTime(calendar.getTimeInMillis()));
                         if (alarmManager != null)
                             alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
                     }
@@ -189,4 +204,39 @@ public class MeetingViewFragment extends Fragment implements EventAlarmAddListen
                     pendingIntent);
         }
     };
+
+    public void initRepeatingTask() {
+        try {
+            mHandlerTask = new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        eventAdapter.notifyDataSetChanged();
+                    } catch (Exception e) {
+                        // TODO: handle exception
+                    } finally {
+                        //also call the same runnable to call it at regular interval
+                        handler.postDelayed(this, 60000);
+                    }
+                }
+            };
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void startRepeatingTask()
+    {
+        try {
+            mHandlerTask.run();
+        } catch (Exception e) {}
+    }
+
+    private void stopRepeatingTask()
+    {
+        try {
+            handler.removeCallbacks(mHandlerTask);
+        } catch (Exception e) {}
+    }
+
 }
